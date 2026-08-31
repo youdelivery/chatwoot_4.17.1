@@ -198,6 +198,24 @@ RSpec.describe 'WhatsApp Calls API', type: :request do
       expect(response.parsed_body['status']).to eq('permission_requested')
     end
 
+    it 'keeps the contact-level phone recipient when an existing conversation uses a BSUID' do
+      contact_inbox.update!(source_id: 'IN.2081978709342942')
+      initiate_conversation
+      expect(provider_service).to receive(:initiate_call)
+        .with('15551234567', 'sdp_offer')
+        .and_raise(Voice::CallErrors::NoCallPermission)
+      expect(provider_service).to receive(:send_call_permission_request)
+        .with('15551234567')
+        .and_return({ 'messages' => [{ 'id' => 'wamid.req_phone' }] })
+
+      post "/api/v1/accounts/#{account.id}/whatsapp_calls/initiate",
+           params: { contact_id: contact.id, inbox_id: inbox.id, sdp_offer: 'sdp_offer' },
+           headers: agent.create_new_auth_token
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['status']).to eq('permission_requested')
+    end
+
     it 'returns permission_request_failed when send_call_permission_request raises a transport error' do
       allow(provider_service).to receive(:initiate_call).and_raise(Voice::CallErrors::NoCallPermission)
       allow(provider_service).to receive(:send_call_permission_request).and_raise(Faraday::TimeoutError)

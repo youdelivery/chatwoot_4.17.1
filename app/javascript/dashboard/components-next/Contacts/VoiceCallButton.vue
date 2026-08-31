@@ -56,10 +56,16 @@ const conversationVoiceInbox = computed(() => {
   const conversation = store.getters.getConversationById(props.conversationId);
   return voiceInboxes.value.find(inbox => inbox.id === conversation?.inbox_id);
 });
+const hasWhatsappConversationIdentity = computed(
+  () =>
+    getVoiceCallProvider(conversationVoiceInbox.value) ===
+    VOICE_CALL_PROVIDERS.WHATSAPP
+);
 
 const shouldRender = computed(
   () =>
-    hasVoiceInboxes.value && (!!props.phone || !!conversationVoiceInbox.value)
+    hasVoiceInboxes.value &&
+    (!!props.phone || hasWhatsappConversationIdentity.value)
 );
 
 const isInitiatingCall = computed(() => {

@@ -92,9 +92,13 @@ module Enterprise::Whatsapp::Providers::WhatsappCloudService
 
   def initiate_call_body(recipient, sdp_offer)
     {
-      messaging_product: 'whatsapp', **recipient_params(recipient), action: 'connect',
+      messaging_product: 'whatsapp', **call_recipient_params(recipient), action: 'connect',
       session: { sdp: sdp_offer, sdp_type: 'offer' }
     }.to_json
+  end
+
+  def call_recipient_params(recipient)
+    recipient.to_s.match?(RegexHelper::WHATSAPP_BSUID_REGEX) ? { recipient: recipient } : { to: recipient }
   end
 
   def process_initiate_call_response(response)

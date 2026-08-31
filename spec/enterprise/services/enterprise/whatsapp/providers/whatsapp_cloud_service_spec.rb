@@ -61,7 +61,7 @@ describe Whatsapp::Providers::WhatsappCloudService do
 
     it 'uses recipient for a BSUID' do
       stub_request(:post, calls_url)
-        .with(body: { messaging_product: 'whatsapp', recipient_type: 'individual', recipient: 'IN.2081978709342942', action: 'connect',
+        .with(body: { messaging_product: 'whatsapp', recipient: 'IN.2081978709342942', action: 'connect',
                       session: { sdp: 'sdp_offer', sdp_type: 'offer' } }.to_json)
         .to_return(status: 200, body: { calls: [{ id: 'wacall_bsuid' }] }.to_json, headers: headers)
 
