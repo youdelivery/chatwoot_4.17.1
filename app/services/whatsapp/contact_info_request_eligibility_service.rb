@@ -71,8 +71,13 @@ class Whatsapp::ContactInfoRequestEligibilityService
   end
 
   def available_delivery_mode
-    return 'interactive' if conversation.can_reply?
-    return 'template' if request_contact_info_templates.any?
+    return @available_delivery_mode if defined?(@available_delivery_mode)
+
+    @available_delivery_mode = if conversation.can_reply?
+                                 'interactive'
+                               elsif request_contact_info_templates.any?
+                                 'template'
+                               end
   end
 
   def whatsapp_cloud_channel?
