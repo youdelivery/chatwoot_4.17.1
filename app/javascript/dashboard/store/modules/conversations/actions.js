@@ -19,6 +19,8 @@ import {
   syncConversationCallVisibility,
 } from 'dashboard/helper/voice';
 
+const TERMINAL_CONTACT_INFO_REQUEST_STATES = ['shared', 'identity_conflict'];
+
 export const hasMessageFailedWithExternalError = pendingMessage => {
   // This helper is used to check if the message has failed with an external error.
   // We have two cases
@@ -351,8 +353,21 @@ const actions = {
     );
   },
 
-  updateMessage({ commit, rootGetters }, message) {
+  updateMessage({ commit, dispatch, rootGetters }, message) {
     commit(types.ADD_MESSAGE, message);
+
+    const contactInfoRequest =
+      message.content_attributes?.whatsapp_contact_info;
+    const isTerminalContactInfoRequest =
+      contactInfoRequest?.type === 'request' &&
+      (message.status === MESSAGE_STATUS.FAILED ||
+        TERMINAL_CONTACT_INFO_REQUEST_STATES.includes(
+          contactInfoRequest.state
+        ));
+    if (isTerminalContactInfoRequest) {
+      dispatch('getConversation', message.conversation_id);
+    }
+
     handleVoiceCallUpdated(
       commit,
       message,
