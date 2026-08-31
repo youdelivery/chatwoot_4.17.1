@@ -29,7 +29,10 @@ class Conversations::FilterService < FilterService
     conversations = @account.conversations.includes(
       :taggings, { assignee: { avatar_attachment: [:blob] } }, { contact: { avatar_attachment: [:blob] } }, :team,
       :contact_inbox
-    ).preload(inbox: :channel)
+    ).preload(
+      inbox: :channel,
+      ai_assignee: { avatar_attachment: [:blob] }
+    )
 
     Conversations::PermissionFilterService.new(
       conversations,
