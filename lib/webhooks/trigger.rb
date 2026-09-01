@@ -1,6 +1,20 @@
+require 'ipaddr'
+require 'resolv'
+
 class Webhooks::Trigger
   SUPPORTED_ERROR_HANDLE_EVENTS = %w[message_created message_updated].freeze
   RETRYABLE_AGENT_BOT_STATUSES = [429, 500].freeze
+
+  # Some Railway deployments only have outbound routing for IPv4 and fail with
+  # `Errno::ENETUNREACH` when a hostname's AAAA record is tried first/only.
+  # Force webhook delivery to resolve IPv4 addresses exclusively so it never
+  # attempts an unreachable IPv6 route.
+  IPV4_ONLY_RESOLVER = lambda do |hostname|
+    Resolv.getaddresses(hostname).filter_map do |address|
+      ip = IPAddr.new(address)
+      ip if ip.ipv4?
+    end
+  end
 
   class RetryableError < StandardError
     attr_reader :status
@@ -47,6 +61,7 @@ class Webhooks::Trigger
       headers: request_headers(body),
       open_timeout: webhook_timeout,
       read_timeout: webhook_timeout,
+      resolver: IPV4_ONLY_RESOLVER,
       validate_content_type: false
     ) { |_response| nil }
   end

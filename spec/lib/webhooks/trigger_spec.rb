@@ -40,6 +40,7 @@ describe Webhooks::Trigger do
         headers: base_headers,
         open_timeout: webhook_timeout,
         read_timeout: webhook_timeout,
+        resolver: Webhooks::Trigger::IPV4_ONLY_RESOLVER,
         validate_content_type: false
       ).and_yield(fetch_result)
 
@@ -175,6 +176,22 @@ describe Webhooks::Trigger do
     end
   end
 
+  describe 'IPV4_ONLY_RESOLVER' do
+    it 'filters out IPv6 addresses and keeps IPv4 ones' do
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['2606:4700:3030::ac43:b2a0', '172.67.178.160'])
+
+      resolved = described_class::IPV4_ONLY_RESOLVER.call('example.com')
+
+      expect(resolved.map(&:to_s)).to eq(['172.67.178.160'])
+    end
+
+    it 'returns an empty array when only IPv6 addresses are available' do
+      allow(Resolv).to receive(:getaddresses).with('example.com').and_return(['2606:4700:3030::ac43:b2a0'])
+
+      expect(described_class::IPV4_ONLY_RESOLVER.call('example.com')).to eq([])
+    end
+  end
+
   describe 'request headers' do
     let(:payload) { { event: 'message_created' } }
     let(:body) { payload.to_json }
@@ -188,6 +205,7 @@ describe Webhooks::Trigger do
           headers: base_headers,
           open_timeout: webhook_timeout,
           read_timeout: webhook_timeout,
+          resolver: Webhooks::Trigger::IPV4_ONLY_RESOLVER,
           validate_content_type: false
         ).and_yield(fetch_result)
 
@@ -276,6 +294,7 @@ describe Webhooks::Trigger do
         headers: base_headers,
         open_timeout: default_timeout,
         read_timeout: default_timeout,
+        resolver: Webhooks::Trigger::IPV4_ONLY_RESOLVER,
         validate_content_type: false
       ).and_yield(fetch_result)
 
@@ -294,6 +313,7 @@ describe Webhooks::Trigger do
         headers: base_headers,
         open_timeout: default_timeout,
         read_timeout: default_timeout,
+        resolver: Webhooks::Trigger::IPV4_ONLY_RESOLVER,
         validate_content_type: false
       ).and_yield(fetch_result)
 
